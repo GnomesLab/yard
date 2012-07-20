@@ -113,6 +113,11 @@ class YARD::Handlers::Ruby::ClassHandler < YARD::Handlers::Ruby::Base
       end
     when :call, :command_call
       cname = superclass.namespace.source
+
+      if cname == 'Sequel' && superclass.method_name(true) == :Model
+        return 'Sequel::Model'
+      end
+
       if cname =~ /^O?Struct$/ && superclass.method_name(true) == :new
         return cname
       end
