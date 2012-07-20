@@ -243,4 +243,8 @@ describe "YARD::Handlers::Ruby::#{LEGACY_PARSER ? "Legacy::" : ""}ClassHandler" 
   it "should handle inheritance from 'self'" do
     Registry.at('Outer1::Inner1').superclass.should == Registry.at('Outer1')
   end
+
+  it "should handle Sequel::Model(:table) superclass expressions", debug: true do
+    Registry.at(:MySequelModel).superclass.should == P('Sequel::Model')
+  end
 end
