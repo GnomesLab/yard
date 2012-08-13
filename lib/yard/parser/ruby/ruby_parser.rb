@@ -498,7 +498,7 @@ module YARD
 
           hash_flag = $1 == '##' ? true : false
 
-          if append_comment && @comments_last_column == column
+          if append_comment && @comments_last_column && @comments_last_column == column
             @comments.delete(lineno - 1)
             @comments_flags[lineno] = @comments_flags[lineno - 1]
             @comments_flags.delete(lineno - 1)
@@ -515,6 +515,7 @@ module YARD
 
         def on_embdoc_beg(text)
           visit_ns_token(:embdoc_beg, text)
+          @embdoc_start = charno-text.length
           @embdoc = ""
         end
 
@@ -525,7 +526,10 @@ module YARD
 
         def on_embdoc_end(text)
           visit_ns_token(:embdoc_end, text)
+          @comments_last_column = nil
           @comments[lineno] = @embdoc
+          @comments_range[lineno] = @embdoc_start...charno
+          @embdoc_start = nil
           @embdoc = nil
         end
 
@@ -535,8 +539,9 @@ module YARD
 
         def insert_comments
           root.traverse do |node|
-            next if node.type == :list || node.parent.type != :list
-            (node.line - 2).upto(node.line) do |line|
+            next if node.type == :comment || node.type == :list || node.parent.type != :list
+            # check upwards from line before node; check node's line at the end
+            ((node.line-1).downto(node.line-2).to_a + [node.line]).each  do |line|
               comment = @comments[line]
               if comment && !comment.empty?
                 add_comment(line, node)
