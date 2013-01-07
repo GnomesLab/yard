@@ -145,7 +145,9 @@ describe YARD::Templates::Helpers::HtmlHelper do
 
     it "should autolink URLs (markdown specific)" do
       log.enter_level(Logger::FATAL) do
-        pending 'This test depends on markdown' unless markup_class(:markdown)
+        unless markup_class(:markdown).to_s == "RedcarpetCompat"
+          pending 'This test depends on a markdown engine that supports autolinking'
+        end
       end
       htmlify('http://example.com', :markdown).chomp.gsub('&#47;', '/').should ==
         '<p><a href="http://example.com">http://example.com</a></p>'
@@ -514,7 +516,7 @@ describe YARD::Templates::Helpers::HtmlHelper do
       subject.should_receive(:respond_to?).with('html_syntax_highlight_NAME').and_return(true)
       subject.should_receive(:html_syntax_highlight_NAME).and_return("foobar")
       subject.htmlify('<pre><code>def x; end</code></pre>', :html).should ==
-        '<pre class="code NAME"><code>foobar</code></pre>'
+        '<pre class="code NAME"><code class="NAME">foobar</code></pre>'
     end
 
     it "should add !!!LANG to className in outputted pre tag" do
@@ -523,7 +525,7 @@ describe YARD::Templates::Helpers::HtmlHelper do
       subject.should_receive(:respond_to?).with('html_syntax_highlight_LANG').and_return(true)
       subject.should_receive(:html_syntax_highlight_LANG).and_return("foobar")
       subject.htmlify("<pre><code>!!!LANG\ndef x; end</code></pre>", :html).should ==
-        '<pre class="code LANG"><code>foobar</code></pre>'
+        '<pre class="code LANG"><code class="LANG">foobar</code></pre>'
     end
 
     it "should call html_syntax_highlight_NAME if source starts with !!!NAME" do
@@ -561,17 +563,17 @@ describe YARD::Templates::Helpers::HtmlHelper do
 
     it "shouldn't escape code snippets twice" do
       subject.htmlify('<pre lang="foo"><code>{"foo" => 1}</code></pre>', :html).should ==
-        '<pre class="code foo"><code>{&quot;foo&quot; =&gt; 1}</code></pre>'
+        '<pre class="code foo"><code class="foo">{&quot;foo&quot; =&gt; 1}</code></pre>'
     end
 
     it "should highlight source when matching a pre lang= tag" do
       subject.htmlify('<pre lang="foo"><code>x = 1</code></pre>', :html).should ==
-        '<pre class="code foo"><code>x = 1</code></pre>'
+        '<pre class="code foo"><code class="foo">x = 1</code></pre>'
     end
 
     it "should highlight source when matching a code class= tag" do
       subject.htmlify('<pre><code class="foo">x = 1</code></pre>', :html).should ==
-        '<pre class="code foo"><code>x = 1</code></pre>'
+        '<pre class="code foo"><code class="foo">x = 1</code></pre>'
     end
   end
 

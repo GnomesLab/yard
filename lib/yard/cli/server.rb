@@ -112,12 +112,8 @@ module YARD
          options_file = File.join(dir, Yardoc::DEFAULT_YARDOPTS_FILE)
          if File.exist?(options_file)
            # Found yardopts, extract db path
-           old_yfile = Registry.yardoc_file
-           y = CLI::Yardoc.new
-           y.options_file = options_file
-           y.parse_arguments
-           db = File.expand_path(YARD::Registry.yardoc_file, dir)
-           YARD::Registry.yardoc_file = old_yfile
+           yfile = extract_db_from_options_file(options_file)
+           db = File.expand_path(yfile, dir)
 
            # Create libver
            libver = YARD::Server::LibraryVersion.new(library, nil, db)
@@ -185,6 +181,9 @@ module YARD
         opts.on('-d', '--daemon', 'Daemonizes the server process') do
           server_options[:daemonize] = true
         end
+        opts.on('-B HOST', '--bind', 'The host address to bind to') do |host|
+          server_options[:Host] = host.to_s
+        end        
         opts.on('-p PORT', '--port', 'Serves documentation on PORT') do |port|
           server_options[:Port] = port.to_i
         end
@@ -232,6 +231,22 @@ module YARD
         Dir.chdir(libver.source_path) do
           Yardoc.run('-n')
         end
+      end
+
+      def extract_db_from_options_file(options_file)
+        args = File.read_binary(options_file).shell_split
+        db = YARD::Registry.yardoc_file
+        opts = OptionParser.new
+        opts.on('-b', '--db FILE') {|file| db = file }
+
+        begin
+          opts.parse!(args)
+        rescue OptionParser::ParseError
+          args.shift if args.first && args.first[0,1] != '-'
+          retry
+        end
+
+        db
       end
     end
   end

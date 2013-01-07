@@ -16,8 +16,12 @@ describe YARD::CLI::Server do
     new_cli
   end
 
+  after(:all) do
+    Server::Adapter.shutdown
+  end
+
   def new_cli
-    @cli = YARD::CLI::Server.new
+    @cli = subject
   end
 
   def rack_required
@@ -81,6 +85,7 @@ describe YARD::CLI::Server do
 
   describe 'when .yardopts file exists' do
     before :each do
+      Registry.yardoc_file = Registry::DEFAULT_YARDOC_FILE
       Dir.stub!(:pwd).and_return('/path/to/bar')
       @name = 'bar'
     end
@@ -167,6 +172,24 @@ describe YARD::CLI::Server do
       run '-d'
       run '--daemon'
     end
+
+    it "should accept -B, --bind" do
+      @server_options[:Host] = 'example.com'
+      run '-B', 'example.com'
+      run '--bind', 'example.com'
+    end    
+
+    it "should bind address with WebRick adapter" do
+      @server_options[:Host] = 'example.com'
+      run '-B', 'example.com', '-a', 'webrick'
+      run '--bind', 'example.com', '-a', 'webrick'
+    end  
+
+    it "should bind address with Rack adapter" do
+      @server_options[:Host] = 'example.com'
+      run '-B', 'example.com', '-a', 'rack'
+      run '--bind', 'example.com', '-a', 'rack'
+    end          
 
     it "should accept -p, --port" do
       @server_options[:Port] = 10
